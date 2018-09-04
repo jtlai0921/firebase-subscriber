@@ -41,7 +41,7 @@ class Channel {
 
     return (snapshot)=> {
       let val = snapshot.val()
-      let key = snapshot.key()
+      let key = snapshot.key
 
       if ( ! (ignoreFirst && isFirstMessage) ) {
         cb(val, key)

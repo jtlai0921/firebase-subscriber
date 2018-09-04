@@ -1,12 +1,12 @@
 import Connection from './Connection'
 import Channel from './Channel'
 
-const subscriber = function(endPoint, { getAuthToken, isAnonymous = false }) {
-  const getConnection = Connection(endPoint, { getAuthToken, isAnonymous })
+const subscriber = function(config, { getAuthToken, isAnonymous = false }) {
+  const getConnection = Connection(config, { getAuthToken, isAnonymous })
 
   return function subscribe(path) {
     let connection = getConnection()
-    let ref = connection.child(path)
+    let ref = connection.ref(path)
     return new Channel({ ref })
   }
 }
