@@ -14,7 +14,7 @@ const Connection = function (config, {
   isAnonymous,
   needAuth
 }) {
-  let app
+  let app = firebase.initializeApp(config)
   let authed = false
   let authorizing = false
   let expiresAt = 0
@@ -29,10 +29,6 @@ const Connection = function (config, {
   }
 
   return function getConnection() {
-    if (!app) {
-      app = firebase.initializeApp(config)
-    }
-
     if (!needAuth) {
       return app.database()
     }

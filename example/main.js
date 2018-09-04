@@ -4,7 +4,10 @@ $(function() {
   const config = {
     databaseURL: 'https://hacker-news.firebaseio.com'
   }
-  const subscribe = subscriber(config)
+  const options = {
+    needAuth: false
+  }
+  const subscribe = subscriber(config, options)
 
   const channel = subscribe('v0/topstories')
   const storyMap = {}

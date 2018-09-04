@@ -3,7 +3,7 @@ import Channel from './Channel'
 
 export const defaultOptions = {
   getAuthToken: null,
-  needAuth: false,
+  needAuth: true,
   isAnonymous: false
 }
 
