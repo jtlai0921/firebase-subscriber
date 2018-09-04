@@ -1,12 +1,12 @@
 {
   "name": "firebase-subscriber",
-  "version": "3.0.1",
+  "version": "3.0.1-beta.0",
   "description": "Firebase wrapper handling auth, re-auth, de-registering, and more",
   "main": "dist/bundle.js",
   "scripts": {
     "build": "webpack --config webpack.config.prod.js",
     "test": "NODE_ENV=test NODE_PATH=. mocha -r test/support.js --compilers js:babel-register --recursive 'test/**/*.test.js' -w",
-    "start": "webpack-dev-server --history-api-fallback --hot --inline --progress --colors --quiet --port 3000",
+    "start": "webpack-dev-server --history-api-fallback --hot --inline --progress --colors --quiet --port 3009",
     "release:beta": "yarn run build && release pre beta && yarn publish",
     "release:patch": "yarn run build && release patch && yarn publish",
     "release:minor": "yarn run build && release minor && yarn publish",
