@@ -1,19 +1,44 @@
 $(function() {
-  var endPoint = 'https://luminous-fire-6308.firebaseio.com';
-  var getAuthToken = function() {
-    return Promise.resolve('the-token');
+  const subscriber = window.FirebaseSubscriber.subscriber
+
+  const config = {
+    databaseURL: 'https://hacker-news.firebaseio.com'
   }
-  var subscribe = FirebaseSubscriber.subscriber(endPoint, getAuthToken);
-  var channel = subscribe('/my-test-path');
+  const subscribe = subscriber(config)
 
-  $('#push').click(function() {
-    channel.push({ pushTime: new Date().getTime() });
-  });
+  const channel = subscribe('v0/topstories')
+  const storyMap = {}
+  let top5Ids = []
+  const $stories = $('#stories')
+  const $updateAt = $('#updateAt')
 
-  channel.on('child_added', function(val) {
-    console.log('on child added', val);
+  channel.on('value', function(storyIds) {
+    top5Ids = storyIds.slice(0, 5)
+    top5Ids.forEach(function(storyId) {
+      if (storyMap[storyId] === undefined) {
+        fetchStory(storyId)
+      }
+    })
+    const now = new Date()
+    $updateAt.text(`${now.getHours()}:${now.getMinutes()}`)
   })
-  channel.on('value', function(val) {
-    console.log('on value', val);
-  })
+
+  function fetchStory(storyId) {
+    subscribe(`v0/item/${storyId}`).once('value', function(story) {
+      storyMap[story.id] = story
+      renderStories()
+    })
+  }
+
+  function renderStories() {
+    const html = top5Ids.reduce(function(memo, storyId) {
+      const story = storyMap[storyId]
+      if (story) {
+        return memo + `<p><a href="${story.url}">${story.title}</a></p>`
+      } else {
+        return memo + '<p>loading...</p>'
+      }
+    }, '')
+    $stories.html(html)
+  }
 })

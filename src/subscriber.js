@@ -1,8 +1,14 @@
 import Connection from './Connection'
 import Channel from './Channel'
 
-const subscriber = function(config, { getAuthToken, isAnonymous = false }) {
-  const getConnection = Connection(config, { getAuthToken, isAnonymous })
+export const defaultOptions = {
+  getAuthToken: null,
+  needAuth: false,
+  isAnonymous: false
+}
+
+const subscriber = (config, options = defaultOptions) => {
+  const getConnection = Connection(config, options)
 
   return function subscribe(path) {
     let connection = getConnection()

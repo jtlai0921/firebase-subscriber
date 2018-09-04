@@ -1,4 +1,7 @@
-import firebase from 'firebase'
+import firebase from 'firebase/app'
+import 'firebase/auth'
+import 'firebase/database'
+
 export const EXPIRING_BUFFER = 60 * 60
 
 /*
@@ -6,25 +9,36 @@ export const EXPIRING_BUFFER = 60 * 60
  * @param {function} [options.getAuthToken] - a promise resolving authToken
  * @param {boolean} [options.isAnonymous] - a flag to determine if auth anonymously
  */
-const Connection = function (config, { getAuthToken, isAnonymous }) {
+const Connection = function (config, {
+  getAuthToken,
+  isAnonymous,
+  needAuth
+}) {
   let app
   let authed = false
   let authorizing = false
   let expiresAt = 0
 
-  if (!isAnonymous && typeof getAuthToken !== 'function') {
-    throw new TypeError('getAuthToken should be a function for non-anonymous auth')
-  }
-  if (isAnonymous && typeof getAuthToken === 'function') {
-    throw new TypeError('getAuthToken should not be given for anonymous auth')
+  if (needAuth) {
+    if (!isAnonymous && typeof getAuthToken !== 'function') {
+      throw new TypeError('getAuthToken should be a function for non-anonymous auth')
+    }
+    if (isAnonymous && typeof getAuthToken === 'function') {
+      throw new TypeError('getAuthToken should not be given for anonymous auth')
+    }
   }
 
   return function getConnection() {
     if (!app) {
       app = firebase.initializeApp(config)
     }
+
+    if (!needAuth) {
+      return app.database()
+    }
+
     if (!shouldAuth()) {
-      return firebase.database(app)
+      return app.database()
     }
 
     firebase.auth(app).onAuthStateChanged((user) => {
@@ -41,7 +55,7 @@ const Connection = function (config, { getAuthToken, isAnonymous }) {
       authConnection()
     }
 
-    return firebase.database(app)
+    return app.database()
   }
 
   function shouldAuth () {
