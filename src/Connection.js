@@ -14,7 +14,7 @@ const Connection = function (config, {
   isAnonymous,
   needAuth
 }) {
-  let app = firebase.initializeApp(config)
+  let app = firebase.initializeApp(config, config.appName || '')
   let authed = false
   let authorizing = false
   let expiresAt = 0

@@ -7,7 +7,7 @@ export const defaultOptions = {
   isAnonymous: false
 }
 
-const subscriber = (config, options = defaultOptions) => {
+const subscriber = (config = {}, options = defaultOptions) => {
   const getConnection = Connection(config, options)
 
   return function subscribe(path) {
