@@ -3,18 +3,20 @@ import 'firebase/auth'
 import 'firebase/database'
 
 export const EXPIRING_BUFFER = 60 * 60
+export const DEFAULT_APP_NAME = 'default'
 
 /*
  * @param {object} config - the firebase config
  * @param {function} [options.getAuthToken] - a promise resolving authToken
  * @param {boolean} [options.isAnonymous] - a flag to determine if auth anonymously
  */
-const Connection = function (config, {
+export default function (config, {
   getAuthToken,
-  isAnonymous,
-  needAuth
-}) {
-  let app = firebase.initializeApp(config, config.appName || '')
+  isAnonymous = false,
+  needAuth = true
+} = {}) {
+
+  let app = getFirebaseApp()
   let authed = false
   let authorizing = false
   let expiresAt = 0
@@ -29,12 +31,13 @@ const Connection = function (config, {
   }
 
   return function getConnection() {
+    let db = app.database()
     if (!needAuth) {
-      return app.database()
+      return db
     }
 
     if (!shouldAuth()) {
-      return app.database()
+      return db
     }
 
     firebase.auth(app).onAuthStateChanged((user) => {
@@ -51,14 +54,25 @@ const Connection = function (config, {
       authConnection()
     }
 
-    return app.database()
+    return db
+  }
+
+  function getFirebaseApp () {
+    let name = config.appName || DEFAULT_APP_NAME
+    try {
+      return firebase.initializeApp(config, name)
+    } catch (e) {
+      return firebase.app(name)
+    }
   }
 
   function shouldAuth () {
     if (authorizing) {
       return false
     }
-    return !authed || aboutToExpired(expiresAt)
+    // TODO: expire info on user?
+    // return !authed || aboutToExpired(expiresAt)
+    return !authed
   }
 
   function onLoginSuccess (user) {
@@ -92,5 +106,3 @@ function aboutToExpired (expiresAt) {
   const now = parseInt(new Date().getTime() / 1000)
   return expiresAt - now < EXPIRING_BUFFER
 }
-
-export default Connection
