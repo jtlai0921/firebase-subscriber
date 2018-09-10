@@ -2,9 +2,7 @@ import firebase from 'firebase/app'
 import 'firebase/auth'
 import 'firebase/database'
 
-export const EXPIRING_BUFFER = 60 * 60
 export const DEFAULT_APP_NAME = 'default'
-
 /*
  * @param {object} config - the firebase config
  * @param {function} [options.getAuthToken] - a promise resolving authToken
@@ -19,7 +17,6 @@ export default function (config, {
   let app = getFirebaseApp()
   let authed = false
   let authorizing = false
-  let expiresAt = 0
 
   if (needAuth) {
     if (!isAnonymous && typeof getAuthToken !== 'function') {
@@ -70,15 +67,11 @@ export default function (config, {
     if (authorizing) {
       return false
     }
-    // TODO: expire info on user?
-    // return !authed || aboutToExpired(expiresAt)
     return !authed
   }
 
   function onLoginSuccess (user) {
     authorizing = false
-    console.log('[FIREBASE auth SUCCESS]', user)
-    // expiresAt = authData.expires
     authed = true
   }
 
@@ -100,9 +93,4 @@ export default function (config, {
       console.error('[FIREBASE signInWithCustomToken FAILED]', err)
     })
   }
-}
-
-function aboutToExpired (expiresAt) {
-  const now = parseInt(new Date().getTime() / 1000)
-  return expiresAt - now < EXPIRING_BUFFER
 }

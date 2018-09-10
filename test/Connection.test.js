@@ -138,16 +138,6 @@ describe('Firebase::Connection(firebaseConfig, options)', () => {
         getConnection()
         expect(getAuthToken).to.have.been.calledOnce
       })
-      it.skip('re-auth if connection is about to be expired', (done) => {
-        getConnection()
-        authTokenDeferred.resolve(authToken)
-        authTokenDeferred.promise.then(()=> {
-          authSuccess(user)
-          getConnection()
-          expect(getAuthToken).to.have.been.calledTwice
-          done()
-        })
-      })
     })
 
     describe('when call Connection without `getAuthToken`', () => {
@@ -166,12 +156,6 @@ describe('Firebase::Connection(firebaseConfig, options)', () => {
       })
       it('should not auth when authorizing', () => {
         getConnection()
-        getConnection()
-        expect(authMethods.signInAnonymously).to.have.been.calledOnce
-      })
-      it.skip('re-auth if connection is about to be expired', () => {
-        getConnection()
-        authSuccess(user)
         getConnection()
         expect(authMethods.signInAnonymously).to.have.been.calledOnce
       })
