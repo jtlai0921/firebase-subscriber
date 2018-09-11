@@ -18,7 +18,17 @@ const getAuthToken = function() {
   // this function would be invoked whenever the firebase auth token is expired
 }
 
-const subscribe = FirebaseSubscriber.subscriber(endPoint, { getAuthToken });
+const subscribe = FirebaseSubscriber.subscriber({
+  appName: "default",
+  apiKey: "AIza....",                             // Auth / General Use
+  authDomain: "YOUR_APP.firebaseapp.com",         // Auth with popup/redirect
+  databaseURL: "https://YOUR_APP.firebaseio.com", // Realtime Database
+  storageBucket: "YOUR_APP.appspot.com",          // Storage
+  messagingSenderId: "123456789"                  // Cloud Messaging
+}, {
+  getAuthToken
+});
+
 const channel = subscribe('/my-test-path');
 
 channel.on('child_added', function(val) {
@@ -77,7 +87,7 @@ channel.onDisconnect(function(presenceRef) {
 
 `Connection` is a configurable factory, which
 
-  - takes two arguments: `firebaseEndPoint` and `options`
+  - takes two arguments: `firebaseConfig` and `options`
   - returns singleton connection, which would auto re-auth when expired
 
 #### `options`:
@@ -85,6 +95,7 @@ channel.onDisconnect(function(presenceRef) {
 | Option | Description |
 | --- | --- |
 | `getAuthToken` | A function which fetches firebase auth token from your application server and returns a promise |
+| `needAuth` | A flag to determine if user need to auth or not, default: `true` |
 | `isAnonymous` | A flag to determine if auth anonymously, default: `false` |
 
 #### Usage
@@ -92,7 +103,7 @@ channel.onDisconnect(function(presenceRef) {
 ```javascript
 import { Connection } from 'firebase-subscriber';
 
-const getConnection = Connection(firebaseEndpoint, { getAuthToken });
+const getConnection = Connection(firebaseConfig, { getAuthToken });
 const connection1 = getConnection();
 const connection2 = getConnection();
 
@@ -104,7 +115,7 @@ expect(connection1).to.equal(connection2);
 ```javascript
 // specify `isAnonymous: true` in the options to create an anonymous connection
 // returns singleton connection with auto re-auth as well
-const getConnection = Connection(firebaseEndpoint, { isAnonymous: true });
+const getConnection = Connection(firebaseConfig, { isAnonymous: true });
 const connection = getConnection()
 ```
 

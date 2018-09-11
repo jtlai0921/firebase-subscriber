@@ -1,8 +1,11 @@
 import subscriberCreator from 'src/subscriber';
 
-describe('subscriberCreator(endPoint, options)', function(){
-  let endPoint = 'fb-end-point';
+describe('subscriberCreator(fbConfig, options)', function(){
   let getAuthToken;
+  const fbConfig = {
+    databaseURL: 'https://hacker-news.firebaseio.com'
+  }
+
   beforeEach(function(){
     getAuthToken = sinon.stub();
   });
@@ -19,14 +22,14 @@ describe('subscriberCreator(endPoint, options)', function(){
   });
 
   it('returns a channel subscriber as a function', function(){
-    let subscriber = subscriberCreator(endPoint, { getAuthToken });
+    let subscriber = subscriberCreator(fbConfig, { getAuthToken });
 
     expect(subscriber).to.be.an.instanceof(Function);
   });
-  it('inject `endPoint`, `getAuthToken` and `isAnonymous` to generate channel getter', function(){
+  it('inject `fbConfig`, `getAuthToken` and `isAnonymous` to generate channel getter', function(){
     const isAnonymous = false
-    let subscriber = subscriberCreator(endPoint, { getAuthToken, isAnonymous });
-    expect(Connection).to.have.been.calledWith(endPoint, { getAuthToken, isAnonymous });
+    let subscriber = subscriberCreator(fbConfig, { getAuthToken, isAnonymous });
+    expect(Connection).to.have.been.calledWith(fbConfig, { getAuthToken, isAnonymous });
   });
 
   describe('Subscriber(path)', function(){
@@ -48,17 +51,17 @@ describe('subscriberCreator(endPoint, options)', function(){
     beforeEach(function(){
       ref = {};
       conn = {
-        child: sinon.stub()
+        ref: sinon.stub()
       };
-      conn.child.returns(ref);
+      conn.ref.returns(ref);
       getConnection.returns(conn);
-      subscribe = subscriberCreator(endPoint, { getAuthToken });
+      subscribe = subscriberCreator(fbConfig, { getAuthToken });
     });
 
     it('creates a channel with connection', function(){
       let connection = conn;
       let ch = subscribe(path);
-      expect(conn.child).to.have.been.calledWith(path);
+      expect(conn.ref).to.have.been.calledWith(path);
       expect(Channel).to.have.been.calledWith({ ref })
       expect(ch).to.equal(channel);
     });

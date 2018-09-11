@@ -1,77 +1,96 @@
-import FB from 'firebase'
-export const EXPIRING_BUFFER = 60 * 60
+import firebase from 'firebase/app'
+import 'firebase/auth'
+import 'firebase/database'
 
+export const DEFAULT_APP_NAME = 'default'
 /*
- * @param {string} endPoint - the firebase endpoint
- * @param {object} options
+ * @param {object} config - the firebase config
  * @param {function} [options.getAuthToken] - a promise resolving authToken
  * @param {boolean} [options.isAnonymous] - a flag to determine if auth anonymously
  */
-const Connection = function (endPoint, { getAuthToken, isAnonymous }) {
-  let conn
+export default function (config, {
+  getAuthToken,
+  isAnonymous = false,
+  needAuth = true
+} = {}) {
+
+  let app = getFirebaseApp()
   let authed = false
   let authorizing = false
-  let expiresAt = 0
 
-  if (!isAnonymous && typeof getAuthToken !== 'function') {
-    throw new TypeError('getAuthToken should be a function for non-anonymous auth')
-  }
-  if (isAnonymous && typeof getAuthToken === 'function') {
-    throw new TypeError('getAuthToken should not be given for anonymous auth')
+  if (needAuth) {
+    if (!isAnonymous && typeof getAuthToken !== 'function') {
+      throw new TypeError('getAuthToken should be a function for non-anonymous auth')
+    }
+    if (isAnonymous && typeof getAuthToken === 'function') {
+      throw new TypeError('getAuthToken should not be given for anonymous auth')
+    }
   }
 
   return function getConnection() {
-    if (!conn) {
-      conn = new FB(endPoint)
+    let db = app.database()
+    if (!needAuth) {
+      return db
     }
+
     if (!shouldAuth()) {
-      return conn
+      return db
     }
+
+    firebase.auth(app).onAuthStateChanged((user) => {
+      if (user) {
+        onLoginSuccess(user)
+      } else {
+        // on sign out
+      }
+    })
+
     if (isAnonymous) {
       authAnonymousConnection()
     } else {
       authConnection()
     }
-    return conn
+
+    return db
+  }
+
+  function getFirebaseApp () {
+    let name = config.appName || DEFAULT_APP_NAME
+    try {
+      return firebase.initializeApp(config, name)
+    } catch (e) {
+      return firebase.app(name)
+    }
   }
 
   function shouldAuth () {
     if (authorizing) {
       return false
     }
-    return !authed || aboutToExpired()
+    return !authed
   }
 
-  function aboutToExpired () {
-    const now = parseInt(new Date().getTime() / 1000)
-    return expiresAt - now < EXPIRING_BUFFER
-  }
-
-  function authResultHandler (err, authData) {
+  function onLoginSuccess (user) {
     authorizing = false
-    if (err) {
-      console.error('[FIREBASE AUTH FAILED]', err)
-      return
-    }
-    expiresAt = authData.expires
     authed = true
   }
 
   function authAnonymousConnection () {
     authorizing = true
-    conn.authAnonymously(authResultHandler)
+    firebase.auth(app).signInAnonymously().catch(err => {
+      authorizing = false
+      console.error('[FIREBASE signInAnonymously FAILED]', err)
+    })
   }
 
   function authConnection () {
     authorizing = true
     getAuthToken().then(authToken => {
-      conn.authWithCustomToken(authToken, authResultHandler)
+      return firebase.auth(app).signInWithCustomToken(authToken)
     })
     .catch(err => {
       authorizing = false
-      console.error('[FIREBASE GET_AUTH FAILED]', err)
+      console.error('[FIREBASE signInWithCustomToken FAILED]', err)
     })
   }
 }
-
-export default Connection

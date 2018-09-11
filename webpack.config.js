@@ -7,7 +7,7 @@ var config = {
     './src/index'
   ],
   resolve: {
-    modules: [ 'node_modules', 'bower_components' ]
+    modules: ['node_modules']
   },
   output: {
     path: path.join(__dirname, 'dist'),

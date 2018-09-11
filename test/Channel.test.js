@@ -21,7 +21,7 @@ describe('Firebase::Channel', function() {
   function getDataSnapshot (data, key) {
     return {
       val() { return data },
-      key() { return key }
+      key
     }
   }
 

@@ -1,24 +1,67 @@
-import Connection, { EXPIRING_BUFFER } from 'src/Connection'
+import Connection, {
+  DEFAULT_APP_NAME,
+  EXPIRING_BUFFER } from 'src/Connection'
 import Promise from 'bluebird'
 
-describe('Firebase::Connection(endPoint, options)', () => {
-  let endPoint = 'the-fb-endpoint'
+describe('Firebase::Connection(firebaseConfig, options)', () => {
+  let firebaseConfig = {
+    authDomain: 'YOUR_APP.firebaseapp.com',
+    databaseURL: 'https://YOUR_APP.firebaseio.com'
+  }
   let getAuthToken
   let mockGetTime
   let currentTimeStamp = 1000
+
+  let getConnection, FB
+  let user = {
+    name: 'user'
+  }
+  let authMethods, authSuccess
+  let authTokenDeferred
+
   beforeEach(() => {
     getAuthToken = sinon.stub()
     mockGetTime = Date.prototype.getTime
     Date.prototype.getTime = sinon.stub().returns(currentTimeStamp)
+
+    authMethods = {
+      onAuthStateChanged: (cb) => {
+        authSuccess = cb
+      },
+      signInWithCustomToken: sinon.stub(),
+      signInAnonymously: sinon.stub()
+    }
+    FB = {
+      app: sinon.stub(),
+      initializeApp: sinon.stub(),
+      auth: sinon.stub()
+    }
+    FB.auth.returns(authMethods)
+    FB.initializeApp.returns({
+      database: sinon.stub()
+    })
+    FB.app.returns({
+      database: sinon.stub()
+    })
+    authMethods.signInAnonymously.returns({
+      catch: sinon.stub()
+    })
+
+    Connection.__Rewire__('firebase', FB)
+    authTokenDeferred = Promise.defer()
+    getAuthToken.returns(authTokenDeferred.promise)
   })
+
   afterEach(() => {
+    Connection.__ResetDependency__('firebase')
     Date.prototype.getTime = mockGetTime
   })
+
 
   describe('Argument Error Behavior', () => {
     it('should throw an TypeError when `isAnonymous = false` and `getAuthToken` is not a function', () => {
       try {
-        Connection(endPoint, { isAnonymous: false })
+        Connection(firebaseConfig, { isAnonymous: false })
       } catch (err) {
         expect(err.name).to.equal('TypeError')
         expect(err.message).to.equal('getAuthToken should be a function for non-anonymous auth')
@@ -26,7 +69,7 @@ describe('Firebase::Connection(endPoint, options)', () => {
     })
     it('should throw an TypeError when `isAnonymous = true` and `getAuthToken` is a function', () => {
       try {
-        Connection(endPoint, { isAnonymous: true, getAuthToken: () => {} })
+        Connection(firebaseConfig, { isAnonymous: true, getAuthToken: () => {} })
       } catch (err) {
         expect(err.name).to.equal('TypeError')
         expect(err.message).to.equal('getAuthToken should not be given for anonymous auth')
@@ -35,62 +78,37 @@ describe('Firebase::Connection(endPoint, options)', () => {
   })
 
   describe('#getConnection', () => {
-    let getConnection
-    let FB, conn
-    let authTokenDeferred, onFbAuth
     let authToken = 'the-token'
-
-    function fbAuthDone (err, data) {
-      if (typeof onFbAuth !== 'function') {
-        throw new Error('onFbAuth is not a function')
-      }
-      onFbAuth(err, data)
+    let user = {
+      name: 'user'
     }
+
     function nowInSec () {
       return parseInt(new Date().getTime() / 1000)
     }
-    beforeEach(() => {
-      onFbAuth = null
-      conn = {
-        authWithCustomToken: (token, cb) => { onFbAuth = cb },
-        authAnonymously: cb => { onFbAuth = cb }
-      }
-      sinon.spy(conn, 'authWithCustomToken')
-      sinon.spy(conn, 'authAnonymously')
-      FB = sinon.stub()
-      FB.returns(conn)
-      Connection.__Rewire__('FB', FB)
-      authTokenDeferred = Promise.defer()
-      getAuthToken.returns(authTokenDeferred.promise)
-    })
-
-    afterEach(() => {
-      Connection.__ResetDependency__('FB')
-    })
-
     describe('getConnection behaviors', () => {
       let connection
       beforeEach(() => {
-        getConnection = Connection(endPoint, { getAuthToken, isAnonymous: false})
+        getConnection = Connection(firebaseConfig, { getAuthToken })
         connection = getConnection()
       })
       it('returns `getConnection` as a function', () => {
         expect(getConnection).to.be.an.instanceof(Function)
       })
       it('inits firebase connection if not inited yet', () => {
-        expect(FB).to.have.been.calledWith(endPoint)
-        expect(connection).to.equal(conn)
-      })
-      it('reuse the connection', () => {
-        const connection2 = getConnection()
-        expect(FB).to.have.been.calledOnce
-        expect(connection).to.equal(connection2)
+        expect(FB.initializeApp).to.have.been.calledWith(
+          firebaseConfig,
+          DEFAULT_APP_NAME
+        )
       })
     })
 
     describe('when call Connection with `getAuthToken`', () => {
       beforeEach(() => {
-        getConnection = Connection(endPoint, { getAuthToken, isAnonymous: false})
+        getConnection = Connection(firebaseConfig, {
+          getAuthToken,
+          isAnonymous: false
+        })
       })
       it('retrieve firebase authToken using `getAuthToken`', () => {
         getConnection()
@@ -100,8 +118,8 @@ describe('Firebase::Connection(endPoint, options)', () => {
         getConnection()
         authTokenDeferred.resolve(authToken)
         authTokenDeferred.promise.then(()=> {
-          expect(conn.authWithCustomToken).to
-            .have.been.calledWith(authToken, sinon.match.func)
+          expect(authMethods.signInWithCustomToken).to
+            .have.been.calledWith(authToken)
           done()
         })
       })
@@ -109,7 +127,7 @@ describe('Firebase::Connection(endPoint, options)', () => {
         getConnection()
         authTokenDeferred.resolve(authToken)
         authTokenDeferred.promise.then(()=> {
-          fbAuthDone(null, { expires: nowInSec() + EXPIRING_BUFFER + 100 })
+          authSuccess(user)
           getConnection()
           expect(getAuthToken).to.have.been.calledOnce
           done()
@@ -120,42 +138,26 @@ describe('Firebase::Connection(endPoint, options)', () => {
         getConnection()
         expect(getAuthToken).to.have.been.calledOnce
       })
-      it('re-auth if connection is about to be expired', (done) => {
-        getConnection()
-        authTokenDeferred.resolve(authToken)
-        authTokenDeferred.promise.then(()=> {
-          fbAuthDone(null, { expires: nowInSec() + EXPIRING_BUFFER - 300 })
-          getConnection()
-          expect(getAuthToken).to.have.been.calledTwice
-          done()
-        })
-      })
     })
 
     describe('when call Connection without `getAuthToken`', () => {
       beforeEach(() => {
-        getConnection = Connection(endPoint, { isAnonymous: true })
+        getConnection = Connection(firebaseConfig, { isAnonymous: true })
       })
       it('should call `authAnonymously`', () => {
         getConnection()
-        expect(conn.authAnonymously).to.have.been.called
+        expect(authMethods.signInAnonymously).to.have.been.called
       })
       it('should not doulbe-auth', () => {
         getConnection()
-        fbAuthDone(null, { expires: nowInSec() + EXPIRING_BUFFER + 300 })
+        authSuccess(user)
         getConnection()
-        expect(conn.authAnonymously).to.have.been.calledOnce
+        expect(authMethods.signInAnonymously).to.have.been.calledOnce
       })
       it('should not auth when authorizing', () => {
         getConnection()
         getConnection()
-        expect(conn.authAnonymously).to.have.been.calledOnce
-      })
-      it('re-auth if connection is about to be expired', () => {
-        getConnection()
-        fbAuthDone(null, { expires: nowInSec() + EXPIRING_BUFFER - 300 })
-        getConnection()
-        expect(conn.authAnonymously).to.have.been.calledTwice
+        expect(authMethods.signInAnonymously).to.have.been.calledOnce
       })
     })
   })
