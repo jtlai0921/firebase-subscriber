@@ -6,6 +6,7 @@
   "scripts": {
     "build": "webpack --config webpack.config.prod.js",
     "test": "NODE_ENV=test NODE_PATH=. mocha -r test/support.js --compilers js:babel-register --recursive 'test/**/*.test.js' -w",
+    "test:ci": "NODE_ENV=test NODE_PATH=. mocha -r test/support.js --compilers js:babel-register --recursive 'test/**/*.test.js'",
     "start": "webpack-dev-server --history-api-fallback --hot --inline --progress --colors --quiet --port 3009",
     "release:beta": "yarn run build && release pre beta && yarn publish",
     "release:patch": "yarn run build && release patch && yarn publish",
