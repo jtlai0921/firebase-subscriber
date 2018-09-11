@@ -1,6 +1,6 @@
 {
   "name": "firebase-subscriber",
-  "version": "3.0.1-beta.2",
+  "version": "4.0.0",
   "description": "Firebase wrapper handling auth, re-auth, de-registering, and more",
   "main": "dist/bundle.js",
   "scripts": {
