@@ -5,10 +5,10 @@
   "main": "dist/index.js",
   "scripts": {
     "build": "yarn clean && babel src --out-dir dist",
-    "lint": "standard src --verbose | snazzy",
-    "lint:fix": "standard src --fix --verbose | snazzy",
+    "lint": "standard --verbose | snazzy",
+    "lint:fix": "standard --fix --verbose | snazzy",
     "test": "NODE_ENV=test NODE_PATH=. mocha -r test/support.js --compilers js:babel-register --recursive 'test/**/*.test.js' -w",
-    "test:ci": "NODE_ENV=test NODE_PATH=. mocha -r test/support.js --compilers js:babel-register --recursive 'test/**/*.test.js'",
+    "test:ci": "yarn lint && NODE_ENV=test NODE_PATH=. mocha -r test/support.js --compilers js:babel-register --recursive 'test/**/*.test.js'",
     "start": "webpack-dev-server --history-api-fallback --hot --inline --progress --colors --quiet --port 3009",
     "clean": "rimraf dist",
     "release:beta": "yarn run build && release pre beta && yarn publish",
@@ -20,6 +20,10 @@
   "license": "MIT",
   "dependencies": {
     "yaku": "^0.19.3"
+  },
+  "standard": {
+    "env": ["mocha"],
+    "globals": ["expect", "sinon", "$"]
   },
   "devDependencies": {
     "babel": "^6.23.0",

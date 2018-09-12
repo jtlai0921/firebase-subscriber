@@ -1,3 +1,4 @@
+/* eslint-disable no-unused-expressions */
 import Connection, { DEFAULT_APP_NAME } from 'src/Connection'
 import Promise from 'bluebird'
 

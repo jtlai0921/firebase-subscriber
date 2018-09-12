@@ -1,3 +1,4 @@
+/* eslint-disable no-unused-expressions */
 import Channel from 'src/Channel'
 
 describe('Firebase::Channel', function () {
@@ -24,12 +25,6 @@ describe('Firebase::Channel', function () {
       key
     }
   }
-
-  describe('::new({ connection, path })', function () {
-    it('takes a ref to init', function () {
-      new Channel({ ref })
-    })
-  })
 
   describe('Setter Methods Delegation', function () {
     function ensureDelegateToRef (methodName) {
