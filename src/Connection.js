@@ -29,25 +29,23 @@ export default function (config, {
       return Promise.resolve(getDb())
     }
 
-    if (!shouldAuth()) {
-      return Promise.resolve(getDb())
-    }
-
     return new Promise((resolve, reject) => {
 
-      if (isAnonymous) {
-        authAnonymousConnection().catch((error) => {
-          onLoginFailure(error)
-          reject(error)
-        })
-      } else {
-        authConnection().catch((error) => {
-          onLoginFailure(error)
-          reject(error)
-        })
+      if (!authorizing) {
+        if (isAnonymous) {
+          authAnonymousConnection().catch((error) => {
+            onLoginFailure(error)
+            reject(error)
+          })
+        } else {
+          authConnection().catch((error) => {
+            onLoginFailure(error)
+            reject(error)
+          })
+        }
       }
 
-      firebase.auth().onAuthStateChanged((user) => {
+      firebase.auth(app).onAuthStateChanged((user) => {
         if (user) {
           onLoginSuccess()
           resolve(getDb())
@@ -63,13 +61,6 @@ export default function (config, {
     } catch (e) {
       return firebase.app(name)
     }
-  }
-
-  function shouldAuth () {
-    if (authorizing) {
-      return false
-    }
-    return !authed
   }
 
   function onLoginSuccess () {
