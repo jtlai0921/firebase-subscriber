@@ -1,4 +1,6 @@
 # Firebase Subscriber
+[![Build Status](https://travis-ci.org/CodementorIO/firebase-subscriber.svg?branch=master)](https://travis-ci.org/CodementorIO/firebase-subscriber)
+[![npm](https://img.shields.io/npm/v/firebase-subscriber.svg)](https://www.npmjs.com/package/firebase-subscriber)
 
 FirebaseSubscriber is an abstract layer on top of [Firebase official SDK](https://firebase.google.com/docs/reference/js/).
 The main purpose of FirebaseSubscriber is to:
@@ -7,7 +9,7 @@ The main purpose of FirebaseSubscriber is to:
 - Abstract event unsubscribing by an additional `Channel` layer
 
 ## Installation
-This lib does not include `firebase`, so you'll need install it as well
+This lib does not include `firebase`, so you'll need to install it as well
 ```
 $ yarn add firebase-subscriber firebase
 ```
