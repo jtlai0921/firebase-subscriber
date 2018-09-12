@@ -25,7 +25,7 @@ export default function (config, {
   }
 
   return function getConnection() {
-    if (!needAuth) {
+    if (!needAuth || authed) {
       return Promise.resolve(getDb())
     }
 
@@ -33,13 +33,27 @@ export default function (config, {
       return Promise.resolve(getDb())
     }
 
-    if (isAnonymous) {
-      return authAnonymousConnection()
-    } else {
-      return authConnection()
-    }
+    return new Promise((resolve, reject) => {
 
-    return Promise.resolve(getDb())
+      if (isAnonymous) {
+        authAnonymousConnection().catch((error) => {
+          onLoginFailure(error)
+          reject(error)
+        })
+      } else {
+        authConnection().catch((error) => {
+          onLoginFailure(error)
+          reject(error)
+        })
+      }
+
+      firebase.auth().onAuthStateChanged((user) => {
+        if (user) {
+          onLoginSuccess()
+          resolve(getDb())
+        }
+      })
+    })
   }
 
   function getFirebaseApp () {
@@ -58,10 +72,14 @@ export default function (config, {
     return !authed
   }
 
-  function onLoginSuccess (user) {
+  function onLoginSuccess () {
     authorizing = false
     authed = true
-    return getDb()
+  }
+
+  function onLoginFailure (error) {
+    authorizing = false
+    console.error('[FIREBASE signIn failed]', error)
   }
 
   function getDb () {
@@ -70,25 +88,13 @@ export default function (config, {
 
   function authAnonymousConnection () {
     authorizing = true
-    return firebase.auth(app)
-      .signInAnonymously()
-      .then(onLoginSuccess)
-      .catch(err => {
-        authorizing = false
-        console.error('[FIREBASE signInAnonymously FAILED]', err)
-      })
+    return firebase.auth(app).signInAnonymously()
   }
 
   function authConnection () {
     authorizing = true
-    return getAuthToken()
-      .then(authToken => {
-        return firebase.auth(app).signInWithCustomToken(authToken)
-      })
-      .then(onLoginSuccess)
-      .catch(err => {
-        authorizing = false
-        console.error('[FIREBASE signInWithCustomToken FAILED]', err)
-      })
+    return getAuthToken().then(authToken => {
+      return firebase.auth(app).signInWithCustomToken(authToken)
+    })
   }
 }
