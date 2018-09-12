@@ -1,10 +1,11 @@
+/* eslint-disable no-unused-expressions */
 import Channel from 'src/Channel'
 
-describe('Firebase::Channel', function() {
+describe('Firebase::Channel', function () {
   let connection
   let channel, ref
 
-  beforeEach(function() {
+  beforeEach(function () {
     connection = {
       child: sinon.stub()
     }
@@ -20,24 +21,18 @@ describe('Firebase::Channel', function() {
 
   function getDataSnapshot (data, key) {
     return {
-      val() { return data },
+      val () { return data },
       key
     }
   }
 
-  describe('::new({ connection, path })', function() {
-    it('takes a ref to init', function() {
-      new Channel({ ref })
-    })
-  })
-
-  describe('Setter Methods Delegation', function() {
+  describe('Setter Methods Delegation', function () {
     function ensureDelegateToRef (methodName) {
-      describe(`#${methodName}(value)`, function() {
-        beforeEach(function() {
+      describe(`#${methodName}(value)`, function () {
+        beforeEach(function () {
           ref[methodName] = sinon.stub()
         })
-        it(`delegate method \`${methodName}\` to ref`, function() {
+        it(`delegate method \`${methodName}\` to ref`, function () {
           let channel = new Channel({ ref })
           channel[methodName]('the-val')
           expect(ref[methodName]).to.have.been.calledWith('the-val')
@@ -50,14 +45,14 @@ describe('Firebase::Channel', function() {
     ensureDelegateToRef('remove')
   })
 
-  describe('#onDisconnect(callback)', function() {
+  describe('#onDisconnect(callback)', function () {
     let disconnectRef
-    beforeEach(function() {
+    beforeEach(function () {
       disconnectRef = {}
       ref.onDisconnect = sinon.stub()
       ref.onDisconnect.returns(disconnectRef)
     })
-    it('invokes callback with disconnect ref', function() {
+    it('invokes callback with disconnect ref', function () {
       let channel = new Channel({ ref })
       let disconnectCb = sinon.stub()
       channel.onDisconnect(disconnectCb)
@@ -66,26 +61,25 @@ describe('Firebase::Channel', function() {
     })
   })
 
-  describe('Event Handling', function() {
-
-    describe('#once(eventName, callback, options)', function() {
-      beforeEach(function() {
+  describe('Event Handling', function () {
+    describe('#once(eventName, callback, options)', function () {
+      beforeEach(function () {
         channel = new Channel({ ref })
       })
-      it('registers event and callback on ref', function() {
+      it('registers event and callback on ref', function () {
         let onValue = sinon.spy()
 
         channel.once('value', onValue)
 
         expect(ref.once).to.have.been.calledWith('value', sinon.match.func)
       })
-      it('invokes callback with `val` & `key`', function() {
+      it('invokes callback with `val` & `key`', function () {
         let onValue = sinon.spy()
         let callback
         let data = { key: 'val' }
         let key = 'the-key'
         let dataSnapshot = getDataSnapshot(data, key)
-        ref.once = function(evName, cb) {
+        ref.once = function (evName, cb) {
           callback = cb
         }
 
@@ -118,12 +112,12 @@ describe('Firebase::Channel', function() {
         expect(ref.orderByChild).to.have.been.calledWith(options.orderByChild)
       })
 
-      it('ignore the first one if `ignoreFirst` is passed', function() {
+      it('ignore the first one if `ignoreFirst` is passed', function () {
         let onValue = sinon.spy()
         let callback
         let dataSnapshot1 = getDataSnapshot('val1')
         let dataSnapshot2 = getDataSnapshot('val2')
-        ref.once = function(evName, cb) {
+        ref.once = function (evName, cb) {
           callback = cb
         }
 
@@ -136,24 +130,24 @@ describe('Firebase::Channel', function() {
       })
     })
 
-    describe('#on(eventName, callback, options)', function() {
-      beforeEach(function() {
+    describe('#on(eventName, callback, options)', function () {
+      beforeEach(function () {
         channel = new Channel({ ref })
       })
-      it('registers event and callback on ref', function() {
+      it('registers event and callback on ref', function () {
         let onChildAdded = sinon.spy()
 
         channel.on('child_added', onChildAdded)
 
         expect(ref.on).to.have.been.calledWith('child_added', sinon.match.func)
       })
-      it('invokes callback with `val`ed first params', function() {
+      it('invokes callback with `val`ed first params', function () {
         let onChildAdded = sinon.spy()
         let callback
         let data = { key: 'val' }
         let key = 'the-key'
         let dataSnapshot = getDataSnapshot(data, key)
-        ref.on = function(evName, cb) {
+        ref.on = function (evName, cb) {
           callback = cb
         }
 
@@ -162,12 +156,12 @@ describe('Firebase::Channel', function() {
 
         expect(onChildAdded).to.have.been.calledWith(data, key)
       })
-      it('ignore the first one if `ignoreFirst` is passed', function() {
+      it('ignore the first one if `ignoreFirst` is passed', function () {
         let onChildAdded = sinon.spy()
         let callback
         let dataSnapshot1 = getDataSnapshot('val1')
         let dataSnapshot2 = getDataSnapshot('val2')
-        ref.on = function(evName, cb) {
+        ref.on = function (evName, cb) {
           callback = cb
         }
 
@@ -204,21 +198,23 @@ describe('Firebase::Channel', function() {
     })
   })
 
-  describe('#off()', function() {
+  describe('#off()', function () {
     function createHandle () {
-      return function() {}
+      return function () {}
     }
-    let handle1 = createHandle(),
-      handle2 = createHandle(),
-      handle3 = createHandle()
-    beforeEach(function() {
+    let handle1 = createHandle()
+
+    let handle2 = createHandle()
+
+    let handle3 = createHandle()
+    beforeEach(function () {
       ref.on.onCall(0).returns(handle1)
       ref.on.onCall(1).returns(handle2)
       ref.on.onCall(2).returns(handle3)
       ref.off = sinon.spy()
     })
 
-    it('offs all the registered events', function() {
+    it('offs all the registered events', function () {
       let channel = new Channel({ ref })
       let cb = sinon.spy()
       channel.on('event1', cb)

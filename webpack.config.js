@@ -1,5 +1,4 @@
-var path = require('path');
-var webpack = require('webpack');
+var path = require('path')
 
 var config = {
   devtool: 'cheap-module-eval-source-map',
@@ -29,6 +28,6 @@ var config = {
     contentBase: './example',
     hot: true
   }
-};
+}
 
-module.exports = config;
+module.exports = config

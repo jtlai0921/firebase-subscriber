@@ -1,6 +1,5 @@
-import Connection, {
-  DEFAULT_APP_NAME,
-  EXPIRING_BUFFER } from 'src/Connection'
+/* eslint-disable no-unused-expressions */
+import Connection, { DEFAULT_APP_NAME } from 'src/Connection'
 import Promise from 'bluebird'
 
 describe('Firebase::Connection(firebaseConfig, options)', () => {
@@ -9,20 +8,12 @@ describe('Firebase::Connection(firebaseConfig, options)', () => {
     databaseURL: 'https://YOUR_APP.firebaseio.com'
   }
   let getAuthToken
-  let mockGetTime
-  let currentTimeStamp = 1000
-
   let getConnection, FB
-  let user = {
-    name: 'user'
-  }
   let authMethods, authSuccess
   let authTokenDeferred
 
   beforeEach(() => {
     getAuthToken = sinon.stub()
-    mockGetTime = Date.prototype.getTime
-    Date.prototype.getTime = sinon.stub().returns(currentTimeStamp)
 
     authMethods = {
       onAuthStateChanged: (cb) => {
@@ -54,9 +45,7 @@ describe('Firebase::Connection(firebaseConfig, options)', () => {
 
   afterEach(() => {
     Connection.__ResetDependency__('firebase')
-    Date.prototype.getTime = mockGetTime
   })
-
 
   describe('Argument Error Behavior', () => {
     it('should throw an TypeError when `isAnonymous = false` and `getAuthToken` is not a function', () => {
@@ -83,14 +72,10 @@ describe('Firebase::Connection(firebaseConfig, options)', () => {
       name: 'user'
     }
 
-    function nowInSec () {
-      return parseInt(new Date().getTime() / 1000)
-    }
     describe('getConnection behaviors', () => {
-      let connection
       beforeEach(() => {
         getConnection = Connection(firebaseConfig, { getAuthToken })
-        connection = getConnection()
+        getConnection()
       })
       it('returns `getConnection` as a function', () => {
         expect(getConnection).to.be.an.instanceof(Function)
@@ -117,7 +102,7 @@ describe('Firebase::Connection(firebaseConfig, options)', () => {
       it('`authWithCustomToken` if getAuthToken success', (done) => {
         getConnection()
         authTokenDeferred.resolve(authToken)
-        authTokenDeferred.promise.then(()=> {
+        authTokenDeferred.promise.then(() => {
           expect(authMethods.signInWithCustomToken).to
             .have.been.calledWith(authToken)
           done()
@@ -126,7 +111,7 @@ describe('Firebase::Connection(firebaseConfig, options)', () => {
       it('should not doulbe-auth', (done) => {
         getConnection()
         authTokenDeferred.resolve(authToken)
-        authTokenDeferred.promise.then(()=> {
+        authTokenDeferred.promise.then(() => {
           authSuccess(user)
           getConnection()
           expect(getAuthToken).to.have.been.calledOnce
