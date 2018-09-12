@@ -1,13 +1,18 @@
 # Firebase Subscriber
 
-FirebaseSubscriber is an abstract layer on top of [Firebase official SDK](https://www.firebase.com/docs/web/api/).
+FirebaseSubscriber is an abstract layer on top of [Firebase official SDK](https://firebase.google.com/docs/reference/js/).
 The main purpose of FirebaseSubscriber is to:
 
 - Abstract logic token expiring/re-auth from application logic
 - Abstract event unsubscribing by an additional `Channel` layer
 
+## Installation
+This lib does not include `firebase`, so you'll need install it as well
+```
+$ yarn add firebase-subscriber firebase
+```
 
-## Usage:
+## Usage
 
 ```javascript
 const FirebaseSubscriber = require('firebase-subscriber');
@@ -29,25 +34,25 @@ const subscribe = FirebaseSubscriber.subscriber({
   getAuthToken
 });
 
-const channel = subscribe('/my-test-path');
+subscribe('/my-test-path').then((channel) => {
+  channel.on('child_added', function(val) {
+    // `val` here is the result of snapshot.val()
+    console.log('on child added', val);
+  })
+  channel.on('value', function(val) {
+    console.log('on value', val);
+  })
 
-channel.on('child_added', function(val) {
-  // `val` here is the result of snapshot.val()
-  console.log('on child added', val);
-})
-channel.on('value', function(val) {
-  console.log('on value', val);
-})
+  channel.off(); //=> unsubscribe ALL event handlers bound on the channel
+});
 
-
-channel.off(); //=> unsubscribe ALL event handlers bound on the channel
 ```
 
-## API:
+## API
 
 ### `.subscriber()`
 
-The `.subscriber()` method takes two arguments, `endPoint` and `options` for `Connection`, and returns a function for subscribing certain path of a database.
+The `.subscriber()` method takes two arguments, `firebaseConfig` and `options` for `Connection`, and returns a `Promise` for subscribing certain path of a database.
 
 Please refer to the [Connection](#connection) section for the details of `options`.
 
