@@ -54,16 +54,18 @@ describe('subscriberCreator(fbConfig, options)', function(){
         ref: sinon.stub()
       };
       conn.ref.returns(ref);
-      getConnection.returns(conn);
+      getConnection.returns(Promise.resolve(conn));
       subscribe = subscriberCreator(fbConfig, { getAuthToken });
     });
 
-    it('creates a channel with connection', function(){
+    it('creates a channel with connection', function(done){
       let connection = conn;
-      let ch = subscribe(path);
-      expect(conn.ref).to.have.been.calledWith(path);
-      expect(Channel).to.have.been.calledWith({ ref })
-      expect(ch).to.equal(channel);
+      subscribe(path).then((ch) => {
+        expect(conn.ref).to.have.been.calledWith(path);
+        expect(Channel).to.have.been.calledWith({ ref })
+        expect(ch).to.equal(channel);
+        done()
+      });
     });
   });
 });
