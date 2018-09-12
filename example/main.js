@@ -1,4 +1,4 @@
-$(function() {
+$(function () {
   const subscriber = window.FirebaseSubscriber.subscriber
 
   const config = {
@@ -14,9 +14,9 @@ $(function() {
   const subscribe = subscriber(config, options)
 
   subscribe('v0/topstories').then((channel) => {
-    channel.on('value', function(storyIds) {
+    channel.on('value', function (storyIds) {
       top5Ids = storyIds.slice(0, 5)
-      top5Ids.forEach(function(storyId) {
+      top5Ids.forEach(function (storyId) {
         if (storyMap[storyId] === undefined) {
           fetchStory(storyId)
         }
@@ -26,17 +26,17 @@ $(function() {
     })
   })
 
-  function fetchStory(storyId) {
+  function fetchStory (storyId) {
     subscribe(`v0/item/${storyId}`).then((channel) => {
-      channel.once('value', function(story) {
+      channel.once('value', function (story) {
         storyMap[story.id] = story
         renderStories()
       })
     })
   }
 
-  function renderStories() {
-    const html = top5Ids.reduce(function(memo, storyId) {
+  function renderStories () {
+    const html = top5Ids.reduce(function (memo, storyId) {
       const story = storyMap[storyId]
       if (story) {
         return memo + `<p><a href="${story.url}">${story.title}</a></p>`

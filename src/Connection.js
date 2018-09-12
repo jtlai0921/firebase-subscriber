@@ -10,7 +10,6 @@ export default function (config, {
   isAnonymous = false,
   needAuth = true
 } = {}) {
-
   let app = getFirebaseApp()
   let authed = false
   let authorizing = false
@@ -24,13 +23,12 @@ export default function (config, {
     }
   }
 
-  return function getConnection() {
+  return function getConnection () {
     if (!needAuth || authed) {
       return Promise.resolve(getDb())
     }
 
     return new Promise((resolve, reject) => {
-
       if (!authorizing) {
         if (isAnonymous) {
           authAnonymousConnection().catch((error) => {
