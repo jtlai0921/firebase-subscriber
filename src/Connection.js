@@ -1,13 +1,10 @@
+import Promise from 'yaku/lib/yaku.core'
 import firebase from 'firebase/app'
 import 'firebase/auth'
 import 'firebase/database'
 
 export const DEFAULT_APP_NAME = 'default'
-/*
- * @param {object} config - the firebase config
- * @param {function} [options.getAuthToken] - a promise resolving authToken
- * @param {boolean} [options.isAnonymous] - a flag to determine if auth anonymously
- */
+
 export default function (config, {
   getAuthToken,
   isAnonymous = false,
@@ -28,30 +25,21 @@ export default function (config, {
   }
 
   return function getConnection() {
-    let db = app.database()
     if (!needAuth) {
-      return db
+      return Promise.resolve(getDb())
     }
 
     if (!shouldAuth()) {
-      return db
+      return Promise.resolve(getDb())
     }
-
-    firebase.auth(app).onAuthStateChanged((user) => {
-      if (user) {
-        onLoginSuccess(user)
-      } else {
-        // on sign out
-      }
-    })
 
     if (isAnonymous) {
-      authAnonymousConnection()
+      return authAnonymousConnection()
     } else {
-      authConnection()
+      return authConnection()
     }
 
-    return db
+    return Promise.resolve(getDb())
   }
 
   function getFirebaseApp () {
@@ -73,24 +61,34 @@ export default function (config, {
   function onLoginSuccess (user) {
     authorizing = false
     authed = true
+    return getDb()
+  }
+
+  function getDb () {
+    return app.database()
   }
 
   function authAnonymousConnection () {
     authorizing = true
-    firebase.auth(app).signInAnonymously().catch(err => {
-      authorizing = false
-      console.error('[FIREBASE signInAnonymously FAILED]', err)
-    })
+    return firebase.auth(app)
+      .signInAnonymously()
+      .then(onLoginSuccess)
+      .catch(err => {
+        authorizing = false
+        console.error('[FIREBASE signInAnonymously FAILED]', err)
+      })
   }
 
   function authConnection () {
     authorizing = true
-    getAuthToken().then(authToken => {
-      return firebase.auth(app).signInWithCustomToken(authToken)
-    })
-    .catch(err => {
-      authorizing = false
-      console.error('[FIREBASE signInWithCustomToken FAILED]', err)
-    })
+    return getAuthToken()
+      .then(authToken => {
+        return firebase.auth(app).signInWithCustomToken(authToken)
+      })
+      .then(onLoginSuccess)
+      .catch(err => {
+        authorizing = false
+        console.error('[FIREBASE signInWithCustomToken FAILED]', err)
+      })
   }
 }

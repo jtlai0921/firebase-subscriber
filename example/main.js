@@ -7,29 +7,31 @@ $(function() {
   const options = {
     needAuth: false
   }
-  const subscribe = subscriber(config, options)
-
-  const channel = subscribe('v0/topstories')
   const storyMap = {}
   let top5Ids = []
   const $stories = $('#stories')
   const $updateAt = $('#updateAt')
+  const subscribe = subscriber(config, options)
 
-  channel.on('value', function(storyIds) {
-    top5Ids = storyIds.slice(0, 5)
-    top5Ids.forEach(function(storyId) {
-      if (storyMap[storyId] === undefined) {
-        fetchStory(storyId)
-      }
+  subscribe('v0/topstories').then((channel) => {
+    channel.on('value', function(storyIds) {
+      top5Ids = storyIds.slice(0, 5)
+      top5Ids.forEach(function(storyId) {
+        if (storyMap[storyId] === undefined) {
+          fetchStory(storyId)
+        }
+      })
+      const now = new Date()
+      $updateAt.text(`${now.getHours()}:${now.getMinutes()}`)
     })
-    const now = new Date()
-    $updateAt.text(`${now.getHours()}:${now.getMinutes()}`)
   })
 
   function fetchStory(storyId) {
-    subscribe(`v0/item/${storyId}`).once('value', function(story) {
-      storyMap[story.id] = story
-      renderStories()
+    subscribe(`v0/item/${storyId}`).then((channel) => {
+      channel.once('value', function(story) {
+        storyMap[story.id] = story
+        renderStories()
+      })
     })
   }
 
