@@ -1,4 +1,4 @@
-import Promise from 'yaku/lib/yaku.core'
+import Promise from 'es6-promise'
 import firebase from 'firebase/app'
 import 'firebase/auth'
 import 'firebase/database'

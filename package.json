@@ -19,7 +19,7 @@
   "author": "",
   "license": "MIT",
   "dependencies": {
-    "yaku": "^0.19.3"
+    "es6-promise": "^4.2.8"
   },
   "standard": {
     "env": [
